@@ -74,6 +74,9 @@ static char **sys_argv;
 static int sys_argc = 0;
 #endif
 
+static char sys_libraryError[1024];
+static qboolean sys_libraryErrorSet;
+
 /*
 ================
 Sys_SetFPUCW
@@ -1284,6 +1287,7 @@ Sys_LoadLibrary
 ==============
 */
 void *Sys_LoadLibrary( const char *f ) {
+	HMODULE handle;
 #ifdef UNICODE
 	WCHAR wf[MAX_OSPATH];
 
@@ -1291,10 +1295,17 @@ void *Sys_LoadLibrary( const char *f ) {
 		return NULL;
 	}
 
-	return LoadLibraryW( wf );
+	handle = LoadLibraryW( wf );
 #else
-	return LoadLibrary( f );
+	handle = LoadLibrary( f );
 #endif
+	if ( !handle ) {
+		int error = GetLastError();
+		Com_sprintf( sys_libraryError, sizeof( sys_libraryError ),
+			"%s: error 0x%08x", f, error );
+		sys_libraryErrorSet = qtrue;
+	}
+	return handle;
 }
 
 /*
@@ -1312,7 +1323,13 @@ Sys_LoadFunction
 ==============
 */
 void *Sys_LoadFunction( void *h, const char *fn ) {
-	return GetProcAddress( (HMODULE)h, fn );
+	void *proc = GetProcAddress( (HMODULE)h, fn );
+	if ( !proc ) {
+		Com_sprintf( sys_libraryError, sizeof( sys_libraryError ),
+			"undefined symbol: %s", fn );
+		sys_libraryErrorSet = qtrue;
+	}
+	return proc;
 }
 
 /*
@@ -1321,7 +1338,11 @@ Sys_LibraryError
 ==============
 */
 const char *Sys_LibraryError( void ) {
-	return "unknown";
+	if ( sys_libraryErrorSet ) {
+		sys_libraryErrorSet = qfalse;
+		return sys_libraryError;
+	}
+	return NULL;
 }
 #endif
 
