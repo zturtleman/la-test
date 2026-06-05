@@ -1589,6 +1589,12 @@ IN_Restart
 */
 void IN_Restart( void )
 {
+	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
+	{
+		Com_Printf( "in_restart: Cannot restart input while video is shutdown\n" );
+		return;
+	}
+
 	IN_ShutdownJoystick( );
 	IN_Init( SDL_window );
 }
