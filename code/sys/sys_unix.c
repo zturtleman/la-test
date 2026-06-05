@@ -1006,7 +1006,6 @@ qboolean Sys_PIDIsRunning( int pid )
 	return kill( pid, 0 ) == 0;
 }
 
-#ifdef DEDICATED
 /*
 ==============
 Sys_LoadLibrary
@@ -1042,7 +1041,6 @@ Sys_LibraryError
 const char *Sys_LibraryError( void ) {
 	return dlerror();
 }
-#endif
 
 /*
 =================
