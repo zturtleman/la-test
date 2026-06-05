@@ -1063,6 +1063,7 @@ void IN_Init( void *windowData );
 void IN_Frame( void );
 void IN_Shutdown( void );
 void IN_Restart( void );
+char	*IN_GetClipboardData( void );	// note that this isn't journaled...
 #ifdef USE_FLEXIBLE_DISPLAY
 void IN_SyncMousePosition( void );
 #endif
@@ -1090,7 +1091,6 @@ char	*Sys_GetCurrentUser( void );
 
 void	QDECL Sys_Error( const char *error, ...) __attribute__ ((noreturn, format (printf, 1, 2)));
 void	Sys_Quit (void) __attribute__ ((noreturn));
-char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 
 void	Sys_Print( const char *msg );
 

@@ -438,7 +438,7 @@ void Field_Paste( field_t *edit ) {
 	char	*cbd;
 	int		pasteLen, i;
 
-	cbd = Sys_GetClipboardData();
+	cbd = IN_GetClipboardData();
 
 	if ( !cbd ) {
 		return;

@@ -1592,3 +1592,28 @@ void IN_Restart( void )
 	IN_ShutdownJoystick( );
 	IN_Init( SDL_window );
 }
+
+/*
+===============
+IN_GetClipboardData
+===============
+*/
+char *IN_GetClipboardData(void)
+{
+	char *data = NULL;
+	char *cliptext;
+
+	if ( ( cliptext = SDL_GetClipboardText() ) != NULL ) {
+		if ( cliptext[0] != '\0' ) {
+			size_t bufsize = strlen( cliptext ) + 1;
+
+			data = Z_Malloc( bufsize );
+			Q_strncpyz( data, cliptext, bufsize );
+
+			// find first listed char and set to '\0'
+			strtok( data, "\n\r\b" );
+		}
+		SDL_free( cliptext );
+	}
+	return data;
+}

@@ -34,6 +34,10 @@ void IN_Shutdown( void ) {
 void IN_Restart( void ) {
 }
 
+char *IN_GetClipboardData( void ) {
+	return NULL;
+}
+
 #ifdef USE_FLEXIBLE_DISPLAY
 void IN_SyncMousePosition( void ) {
 }
