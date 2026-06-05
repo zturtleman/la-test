@@ -31,6 +31,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <ctype.h>
 #include <errno.h>
 
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#endif
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
@@ -41,6 +45,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #else
 #	include <SDL.h>
 #endif
+#endif
+
+#if defined(__i386__)
+#include <cpuid.h>
 #endif
 
 #include "sys_local.h"
@@ -313,6 +321,39 @@ void Sys_Quit( void )
 	Sys_Exit( 0 );
 }
 
+#if defined(_M_IX86) || defined(__i386__)
+/*
+=================
+Sys_GetCpuID
+=================
+*/
+static qboolean Sys_GetCpuID( int level, int *pCpuInfo) {
+#ifdef _MSC_VER
+	int cpuInfo[4];
+	int maxlevel;
+	__cpuid( cpuInfo, 0 );
+	maxlevel = cpuInfo[0];
+	if ( maxlevel >= level ) {
+		__cpuid( cpuInfo, level );
+	} else {
+		return qfalse;
+	}
+#else
+	unsigned int cpuInfo[4];
+	// __get_cpuid() checks the maxlevel
+	if ( !__get_cpuid( level, &cpuInfo[0], &cpuInfo[1], &cpuInfo[2], &cpuInfo[3] ) ) {
+		return qfalse;
+	}
+#endif
+
+	pCpuInfo[0] = cpuInfo[0];
+	pCpuInfo[1] = cpuInfo[1];
+	pCpuInfo[2] = cpuInfo[2];
+	pCpuInfo[3] = cpuInfo[3];
+	return qtrue;
+}
+#endif
+
 /*
 =================
 Sys_GetProcessorFeatures
@@ -320,13 +361,48 @@ Sys_GetProcessorFeatures
 */
 cpuFeatures_t Sys_GetProcessorFeatures( void )
 {
-	cpuFeatures_t features = 0;
+	static cpuFeatures_t features = 0;
+	static qboolean setFeatures = qfalse;
 
-#ifndef DEDICATED
-	if( SDL_HasSSE( ) )        features |= CF_SSE;
-	if( SDL_HasSSE2( ) )       features |= CF_SSE2;
-	if( SDL_HasAltiVec( ) )    features |= CF_ALTIVEC;
+	if ( setFeatures ) {
+		return features;
+	}
+
+#if defined(_M_X64) || defined(__x86_64__)
+	features |= CF_SSE | CF_SSE2;
+#elif defined(_M_IX86) || defined(__i386__)
+	{
+		int cpuInfo[4];
+		if ( Sys_GetCpuID( 1, cpuInfo ) ) {
+			if ( cpuInfo[3] & ( 1 << 25 ) ) {
+				features |= CF_SSE;
+			}
+			if ( cpuInfo[3] & ( 1 << 26 ) ) {
+				features |= CF_SSE2;
+			}
+		}
+	}
+#elif (defined(powerc) || defined(powerpc) || defined(ppc) || \
+	defined(__ppc) || defined(__ppc__))
+#ifdef __APPLE__
+	{
+		int altivec = 0;
+		size_t len = sizeof( altivec );
+		if ( sysctlbyname( "hw.optional.altivec", &altivec, &len, NULL, 0 ) == 0 ) {
+			if ( altivec ) {
+				features |= CF_ALTIVEC;
+			}
+		}
+	}
+#else
+	__builtin_cpu_init();
+	if ( __builtin_cpu_supports( "altivec" ) ) {
+		features |= CF_ALTIVEC;
+	}
 #endif
+#endif
+
+	setFeatures = qtrue;
 
 	return features;
 }
