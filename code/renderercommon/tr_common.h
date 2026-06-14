@@ -158,6 +158,7 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 
 void		GLimp_Init( qboolean fixedFunction );
 void		GLimp_Shutdown( void );
+void		*GLimp_GetProcAddress( const char *name );
 void		GLimp_EndFrame( void );
 
 void		GLimp_LogComment( char *comment );

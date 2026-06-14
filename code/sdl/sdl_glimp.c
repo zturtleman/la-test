@@ -811,6 +811,17 @@ success:
 
 /*
 ===============
+GLimp_GetProcAddress
+===============
+*/
+void *GLimp_GetProcAddress( const char *name )
+{
+	return SDL_GL_GetProcAddress( name );
+}
+
+
+/*
+===============
 GLimp_EndFrame
 
 Responsible for doing a swapbuffers
