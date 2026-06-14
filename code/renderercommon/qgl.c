@@ -126,10 +126,34 @@ qboolean QGL_Init( qboolean fixedFunction ) {
 
 	if ( fixedFunction ) {
 		if ( QGL_VERSION_ATLEAST( 1, 1 ) ) {
+			qboolean coreContext;
+
 			QGL_1_1_PROCS;
 			QGL_1_1_FIXED_FUNCTION_PROCS;
 			QGL_DESKTOP_1_1_PROCS;
 			QGL_DESKTOP_1_1_FIXED_FUNCTION_PROCS;
+
+			if ( QGL_VERSION_ATLEAST( 3, 2 ) ) {
+				GLint mask = 0;
+				qglGetIntegerv( GL_CONTEXT_PROFILE_MASK, &mask );
+				coreContext = !!( mask & GL_CONTEXT_CORE_PROFILE_BIT );
+			} else if ( QGL_VERSION_ATLEAST( 3, 1 ) ) {
+				// 3.1 non-forward compatible context may have this extension which restores removed features.
+				coreContext = !QGL_ExtensionSupported( "GL_ARB_compatibility" );
+			} else if ( QGL_VERSION_ATLEAST( 3, 0 ) ) {
+				// 3.0 forward compatible removes the 3.0 deprecated features like fixed-function rendering.
+				GLint flags = 0;
+				qglGetIntegerv( GL_CONTEXT_FLAGS, &flags );
+				coreContext = !!( flags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT );
+			} else {
+				coreContext = qfalse;
+			}
+
+			if ( coreContext ) {
+				Com_sprintf( qglContextError, sizeof( qglContextError ), "Unsupported OpenGL Version (%s), OpenGL compatibility context is required", version );
+				ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError );
+				return qfalse;
+			}
 		} else if ( qglesMajorVersion == 1 && qglesMinorVersion >= 1 ) {
 			// OpenGL ES 1.1 (2.0 is not backward compatible)
 			QGL_1_1_PROCS;
