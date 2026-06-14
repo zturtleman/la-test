@@ -336,4 +336,8 @@ extern int qglesMajorVersion, qglesMinorVersion;
 #define QGL_VERSION_ATLEAST( major, minor ) ( qglMajorVersion > major || ( qglMajorVersion == major && qglMinorVersion >= minor ) )
 #define QGLES_VERSION_ATLEAST( major, minor ) ( qglesMajorVersion > major || ( qglesMajorVersion == major && qglesMinorVersion >= minor ) )
 
+qboolean QGL_Init( qboolean fixedFunction );
+void QGL_Shutdown( void );
+void R_InitExtensions( qboolean fixedFunction );
+
 #endif
