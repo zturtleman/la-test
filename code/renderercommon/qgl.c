@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_common.h"
 
+char qglContextError[1024];
+
 int qglMajorVersion, qglMinorVersion;
 int qglesMajorVersion, qglesMinorVersion;
 
@@ -87,7 +89,8 @@ qboolean QGL_Init( qboolean fixedFunction ) {
 #else
 #define GLE( ret, name, ... ) qgl##name = (name##proc *) GLimp_GetProcAddress("gl" #name); \
 	if ( qgl##name == NULL ) { \
-		Com_Error( ERR_FATAL, "Missing OpenGL function %s\n", "gl" #name ); \
+		Com_sprintf( qglContextError, sizeof( qglContextError ), "Missing OpenGL function %s\n", "gl" #name ); \
+		ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError ); \
 		success = qfalse; \
 	}
 #endif
@@ -96,14 +99,16 @@ qboolean QGL_Init( qboolean fixedFunction ) {
 	GLE(const GLubyte *, GetString, GLenum name)
 
 	if ( !qglGetString ) {
-		Com_Error( ERR_FATAL, "glGetString is NULL" );
+		Q_strncpyz( qglContextError, "glGetString is NULL", sizeof( qglContextError ) );
+		ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError );
 		return qfalse;
 	}
 
 	version = (const char *)qglGetString( GL_VERSION );
 
 	if ( !version ) {
-		Com_Error( ERR_FATAL, "GL_VERISON is NULL" );
+		Q_strncpyz( qglContextError, "GL_VERISON is NULL", sizeof( qglContextError ) );
+		ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError );
 		return qfalse;
 	}
 
@@ -132,10 +137,12 @@ qboolean QGL_Init( qboolean fixedFunction ) {
 			QGL_ES_1_1_PROCS;
 			QGL_ES_1_1_FIXED_FUNCTION_PROCS;
 			// error so this doesn't segfault due to NULL desktop GL functions being used
-			Com_Error( ERR_FATAL, "Unsupported OpenGL Version: %s", version );
+			Com_sprintf( qglContextError, sizeof( qglContextError ), "Unsupported OpenGL Version: %s", version );
+			ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError );
 			return qfalse;
 		} else {
-			Com_Error( ERR_FATAL, "Unsupported OpenGL Version (%s), OpenGL 1.1 is required", version );
+			Com_sprintf( qglContextError, sizeof( qglContextError ), "Unsupported OpenGL Version (%s), OpenGL 1.1 is required", version );
+			ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError );
 			return qfalse;
 		}
 	} else {
@@ -157,7 +164,8 @@ qboolean QGL_Init( qboolean fixedFunction ) {
 			qglDrawBuffer = GLimp_GLES_DrawBuffer;
 			qglPolygonMode = GLimp_GLES_PolygonMode;
 		} else {
-			Com_Error( ERR_FATAL, "Unsupported OpenGL Version (%s), OpenGL 2.0 is required", version );
+			Com_sprintf( qglContextError, sizeof( qglContextError ), "Unsupported OpenGL Version (%s), OpenGL 2.0 is required", version );
+			ri.Printf( PRINT_ALL, "QGL_Init() failed: %s\n", qglContextError );
 			return qfalse;
 		}
 	}

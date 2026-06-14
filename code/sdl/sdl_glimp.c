@@ -765,6 +765,8 @@ void GLimp_Init( qboolean fixedFunction )
 		ri.Cvar_Set( "com_abnormalExit", "0" );
 	}
 
+	qglContextError[0] = '\0';
+
 	ri.Sys_GLimpInit( );
 
 	// Create the window and set up the context
@@ -788,7 +790,11 @@ void GLimp_Init( qboolean fixedFunction )
 	}
 
 	// Nothing worked, give up
-	ri.Error( ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem" );
+	if ( qglContextError[0] ) {
+		ri.Error( ERR_FATAL, "%s", qglContextError );
+	} else {
+		ri.Error( ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem" );
+	}
 
 success:
 	// These values force the UI to disable driver selection
