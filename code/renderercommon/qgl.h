@@ -338,6 +338,7 @@ extern int qglesMajorVersion, qglesMinorVersion;
 
 qboolean QGL_Init( qboolean fixedFunction );
 void QGL_Shutdown( void );
+qboolean QGL_ExtensionSupported( const char *name );
 void R_InitExtensions( qboolean fixedFunction );
 
 #endif

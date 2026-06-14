@@ -263,6 +263,59 @@ void QGL_Shutdown( void ) {
 
 /*
 ===============
+QGL_ExtensionSupported
+
+Check if an OpenGL extension is supported
+===============
+*/
+qboolean QGL_ExtensionSupported( const char *name )
+{
+	if ( qglGetStringi )
+	{
+		int i, numExtensions;
+		const char *extension;
+
+		qglGetIntegerv( GL_NUM_EXTENSIONS, &numExtensions );
+
+		for ( i = 0; i < numExtensions; i++ )
+		{
+			extension = (char *) qglGetStringi( GL_EXTENSIONS, i );
+
+			if ( Q_stricmp( name, extension ) == 0 )
+			{
+				return qtrue;
+			}
+		}
+	}
+	else
+	{
+		int namelen = strlen( name );
+		const char *extensions = (const char *) qglGetString( GL_EXTENSIONS );
+		const char *ext = extensions;
+
+		while ( ext && *ext )
+		{
+			ext = Q_stristr( ext, name );
+			if ( !ext )
+			{
+				break;
+			}
+
+			if ( ( ext[namelen] == ' ' || ext[namelen] == '\0' )
+				&& ( ext == extensions || *(ext - 1) == ' ' ) )
+			{
+				return qtrue;
+			}
+
+			ext++;
+		}
+	}
+
+	return qfalse;
+}
+
+/*
+===============
 R_InitExtensions
 ===============
 */
@@ -279,8 +332,8 @@ void R_InitExtensions( qboolean fixedFunction )
 	glConfig.textureCompression = TC_NONE;
 
 	// GL_EXT_texture_compression_s3tc
-	if ( ( QGLES_VERSION_ATLEAST( 2, 0 ) || SDL_GL_ExtensionSupported( "GL_ARB_texture_compression" ) ) &&
-	     SDL_GL_ExtensionSupported( "GL_EXT_texture_compression_s3tc" ) )
+	if ( ( QGLES_VERSION_ATLEAST( 2, 0 ) || QGL_ExtensionSupported( "GL_ARB_texture_compression" ) ) &&
+	     QGL_ExtensionSupported( "GL_EXT_texture_compression_s3tc" ) )
 	{
 		if ( r_ext_compressed_textures->value )
 		{
@@ -300,7 +353,7 @@ void R_InitExtensions( qboolean fixedFunction )
 	// GL_S3_s3tc ... legacy extension before GL_EXT_texture_compression_s3tc.
 	if (glConfig.textureCompression == TC_NONE)
 	{
-		if ( SDL_GL_ExtensionSupported( "GL_S3_s3tc" ) )
+		if ( QGL_ExtensionSupported( "GL_S3_s3tc" ) )
 		{
 			if ( r_ext_compressed_textures->value )
 			{
@@ -323,7 +376,7 @@ void R_InitExtensions( qboolean fixedFunction )
 	{
 		// GL_EXT_texture_env_add
 		glConfig.textureEnvAddAvailable = qfalse;
-		if ( SDL_GL_ExtensionSupported( "GL_EXT_texture_env_add" ) )
+		if ( QGL_ExtensionSupported( "GL_EXT_texture_env_add" ) )
 		{
 			if ( r_ext_texture_env_add->integer )
 			{
@@ -345,7 +398,7 @@ void R_InitExtensions( qboolean fixedFunction )
 		qglMultiTexCoord2fARB = NULL;
 		qglActiveTextureARB = NULL;
 		qglClientActiveTextureARB = NULL;
-		if ( SDL_GL_ExtensionSupported( "GL_ARB_multitexture" ) )
+		if ( QGL_ExtensionSupported( "GL_ARB_multitexture" ) )
 		{
 			if ( r_ext_multitexture->value )
 			{
@@ -382,7 +435,7 @@ void R_InitExtensions( qboolean fixedFunction )
 		}
 
 		// GL_EXT_compiled_vertex_array
-		if ( SDL_GL_ExtensionSupported( "GL_EXT_compiled_vertex_array" ) )
+		if ( QGL_ExtensionSupported( "GL_EXT_compiled_vertex_array" ) )
 		{
 			if ( r_ext_compiled_vertex_array->value )
 			{
@@ -406,7 +459,7 @@ void R_InitExtensions( qboolean fixedFunction )
 	}
 
 	textureFilterAnisotropic = qfalse;
-	if ( SDL_GL_ExtensionSupported( "GL_EXT_texture_filter_anisotropic" ) )
+	if ( QGL_ExtensionSupported( "GL_EXT_texture_filter_anisotropic" ) )
 	{
 		if ( r_ext_texture_filter_anisotropic->integer ) {
 			qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint *)&maxAnisotropy );
@@ -431,7 +484,7 @@ void R_InitExtensions( qboolean fixedFunction )
 	}
 
 	haveClampToEdge = qfalse;
-	if ( QGL_VERSION_ATLEAST( 1, 2 ) || QGLES_VERSION_ATLEAST( 1, 0 ) || SDL_GL_ExtensionSupported( "GL_SGIS_texture_edge_clamp" ) )
+	if ( QGL_VERSION_ATLEAST( 1, 2 ) || QGLES_VERSION_ATLEAST( 1, 0 ) || QGL_ExtensionSupported( "GL_SGIS_texture_edge_clamp" ) )
 	{
 		ri.Printf( PRINT_ALL, "...using GL_SGIS_texture_edge_clamp\n" );
 		haveClampToEdge = qtrue;
